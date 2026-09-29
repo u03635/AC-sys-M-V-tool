@@ -51,11 +51,23 @@
             color: var(--text-color);
             border: 1px solid var(--border-color);
             border-radius: 6px;
-            font-size: 16px; /* 防止 iOS 縮放 */
+            font-size: 16px;
         }
         input:focus, select:focus {
             outline: none;
             border-color: var(--accent-color);
+        }
+        .capacity-input-group {
+            display: flex;
+            gap: 5px;
+        }
+        .capacity-input-group input {
+            flex: 2;
+        }
+        .capacity-input-group select {
+            flex: 1;
+            padding: 12px 5px;
+            font-size: 0.9rem;
         }
         button {
             width: 100%;
@@ -100,14 +112,23 @@
         </select>
     </div>
     
+    <!-- 優化後的銘牌輸入區塊 -->
     <div style="display: flex; gap: 10px;">
-        <div class="form-group" style="flex: 1;">
-            <label>銘牌噸數 (USRT)</label>
-            <input type="number" id="usrt" step="0.1" value="100">
+        <div class="form-group" style="flex: 1.2;">
+            <label>銘牌冷凍能力</label>
+            <div class="capacity-input-group">
+                <input type="number" id="capacity_val" step="0.1" value="100">
+                <select id="capacity_unit">
+                    <option value="usrt">USRT</option>
+                    <option value="kcal_hr">kcal/hr</option>
+                    <option value="kw_cooling">kW</option>
+                </select>
+            </div>
         </div>
-        <div class="form-group" style="flex: 1;">
-            <label>銘牌額定 (kW)</label>
-            <input type="number" id="rated_kw" step="0.1" value="80">
+        <div class="form-group" style="flex: 0.8;">
+            <!-- 明確標示為耗電功率 -->
+            <label>銘牌耗電 (Power kW)</label>
+            <input type="number" id="rated_power_kw" step="0.1" value="80">
         </div>
     </div>
 
@@ -158,11 +179,12 @@
 async function calculate() {
     const payload = {
         sys_type: document.getElementById('sys_type').value,
-        usrt: document.getElementById('usrt').value,
+        capacity_val: document.getElementById('capacity_val').value,
+        capacity_unit: document.getElementById('capacity_unit').value,
+        rated_power_kw: document.getElementById('rated_power_kw').value,
         temp_in: document.getElementById('temp_in').value,
         temp_out: document.getElementById('temp_out').value,
         measured_flow: document.getElementById('measured_flow').value,
-        rated_kw: document.getElementById('rated_kw').value,
         measured_kw: document.getElementById('measured_kw').value
     };
 

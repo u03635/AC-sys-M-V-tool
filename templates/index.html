@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESG 空調現場量測驗證工具</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1E1E1E;
+            --text-color: #E0E0E0;
+            --border-color: #333333;
+            --accent-color: #4A90E2;
+            --success-color: #00FF00;
+            --error-color: #FF5252;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: var(--surface-color);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        h2 {
+            text-align: center;
+            margin-top: 0;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.95rem;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 16px; /* 防止 iOS 縮放 */
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--accent-color);
+            color: #FFFFFF;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        #result-box {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 6px;
+            background-color: var(--bg-color);
+            display: none;
+        }
+        .valid { color: var(--success-color); font-weight: bold; }
+        .invalid { color: var(--error-color); font-weight: bold; }
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .result-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>ESG 現場驗證工具</h2>
+    <div class="form-group">
+        <label>系統側別</label>
+        <select id="sys_type">
+            <option value="chilled">冰水側 (Chilled Water)</option>
+            <option value="cooling">冷卻水側 (Cooling Water)</option>
+        </select>
+    </div>
+    
+    <div style="display: flex; gap: 10px;">
+        <div class="form-group" style="flex: 1;">
+            <label>銘牌噸數 (USRT)</label>
+            <input type="number" id="usrt" step="0.1" value="100">
+        </div>
+        <div class="form-group" style="flex: 1;">
+            <label>銘牌額定 (kW)</label>
+            <input type="number" id="rated_kw" step="0.1" value="80">
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+        <div class="form-group" style="flex: 1;">
+            <label>進水溫 (°C)</label>
+            <input type="number" id="temp_in" step="0.1" value="12">
+        </div>
+        <div class="form-group" style="flex: 1;">
+            <label>出水溫 (°C)</label>
+            <input type="number" id="temp_out" step="0.1" value="7">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>現場量測流量 (LPM)</label>
+        <input type="number" id="measured_flow" step="0.1" value="1000">
+    </div>
+
+    <div class="form-group">
+        <label>現場量測電力 (kW)</label>
+        <input type="number" id="measured_kw" step="0.1" value="75">
+    </div>
+
+    <button onclick="calculate()">立即驗證</button>
+
+    <div id="result-box">
+        <div class="result-row">
+            <span>現場溫差 (ΔT)：</span>
+            <span id="res_dt"></span>
+        </div>
+        <div class="result-row">
+            <span>理論流量需求：</span>
+            <span id="res_theo_flow"></span>
+        </div>
+        <div class="result-row">
+            <span>流量誤差判定：</span>
+            <span id="res_flow_status"></span>
+        </div>
+        <div class="result-row">
+            <span>負載率 (電力)：</span>
+            <span id="res_power_status"></span>
+        </div>
+    </div>
+</div>
+
+<script>
+async function calculate() {
+    const payload = {
+        sys_type: document.getElementById('sys_type').value,
+        usrt: document.getElementById('usrt').value,
+        temp_in: document.getElementById('temp_in').value,
+        temp_out: document.getElementById('temp_out').value,
+        measured_flow: document.getElementById('measured_flow').value,
+        rated_kw: document.getElementById('rated_kw').value,
+        measured_kw: document.getElementById('measured_kw').value
+    };
+
+    const response = await fetch('/calculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+    const resBox = document.getElementById('result-box');
+    
+    if(data.error) {
+        alert(data.error);
+        return;
+    }
+
+    document.getElementById('res_dt').innerText = `${data.delta_t} °C`;
+    document.getElementById('res_theo_flow').innerText = `${data.theoretical_flow} LPM`;
+    
+    const flowElem = document.getElementById('res_flow_status');
+    if (data.is_flow_valid) {
+        flowElem.innerHTML = `<span class="valid">✅ 合理 (${data.flow_error_percent > 0 ? '+' : ''}${data.flow_error_percent}%)</span>`;
+    } else {
+        flowElem.innerHTML = `<span class="invalid">❌ 異常 (${data.flow_error_percent > 0 ? '+' : ''}${data.flow_error_percent}%)</span>`;
+    }
+
+    const powerElem = document.getElementById('res_power_status');
+    if (data.is_power_valid) {
+        powerElem.innerHTML = `<span class="valid">✅ 合理 (${data.power_ratio_percent}%)</span>`;
+    } else {
+        powerElem.innerHTML = `<span class="invalid">❌ 超載 (${data.power_ratio_percent}%)</span>`;
+    }
+
+    resBox.style.display = 'block';
+}
+</script>
+</body>
+</html>

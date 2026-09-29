@@ -29,12 +29,31 @@
             padding: 25px;
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            position: relative;
         }
         h2 {
             text-align: center;
             margin-top: 0;
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        /* 資訊圖示樣式 */
+        .info-icon {
+            cursor: pointer;
+            color: var(--accent-color);
+            font-size: 1.2rem;
+            border: 2px solid var(--accent-color);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
         }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-size: 0.95rem; color: #BBBBBB; }
@@ -68,12 +87,41 @@
         }
         .result-row:last-child { margin-bottom: 0; }
         .value-text { font-weight: bold; }
+
+        /* 彈出視窗 (Modal) 樣式 */
+        .modal {
+            display: none; position: fixed; z-index: 100; left: 0; top: 0;
+            width: 100%; height: 100%; overflow: auto;
+            background-color: rgba(0,0,0,0.7);
+        }
+        .modal-content {
+            background-color: var(--surface-color);
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            width: 85%;
+            max-width: 500px;
+            color: var(--text-color);
+        }
+        .close-btn {
+            color: #AAAAAA; float: right; font-size: 28px; font-weight: bold; cursor: pointer;
+        }
+        .close-btn:hover, .close-btn:focus { color: #FFFFFF; text-decoration: none; }
+        .formula-item { margin-bottom: 15px; }
+        .formula-item strong { color: var(--highlight-color); display: block; margin-bottom: 5px; }
+        .formula-item code {
+            background-color: var(--bg-color); padding: 8px; border-radius: 4px;
+            display: block; font-size: 0.9rem; border: 1px solid var(--border-color);
+            word-wrap: break-word;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>ESG 現場驗證工具</h2>
+    <h2>ESG 現場驗證工具 <span class="info-icon" onclick="openModal()" title="公式說明">i</span></h2>
+    
     <div class="form-group">
         <label>系統側別</label>
         <select id="sys_type">
@@ -124,7 +172,6 @@
     <button onclick="calculate()">立即驗證</button>
 
     <div id="result-box">
-        <!-- 基礎流量驗證區 -->
         <div class="result-section">
             <div class="section-title">基礎數據驗證</div>
             <div class="result-row">
@@ -141,7 +188,6 @@
             </div>
         </div>
 
-        <!-- 效能與負載指標區 -->
         <div class="result-section">
             <div class="section-title">效能與負載指標</div>
             <div class="result-row">
@@ -168,7 +214,66 @@
     </div>
 </div>
 
+<!-- 公式說明彈出視窗 (Modal) -->
+<div id="formulaModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h3 style="margin-top:0; border-bottom:1px solid #333; padding-bottom:10px;">系統運算公式說明</h3>
+        
+        <div class="formula-item">
+            <strong>現場實測冷凍能力 (Measured RT)</strong>
+            <code>冰水側 = (流量 × 溫差 × 60) / 3024<br>冷卻水側 = ((流量 × 溫差 × 60) / 3024) - (實測耗電 kW / 3.516)</code>
+        </div>
+        <div class="formula-item">
+            <strong>量測運轉效率 (kW/RT)</strong>
+            <code>= 實測耗電 kW / 實測冷凍能力 RT</code>
+        </div>
+        <div class="formula-item">
+            <strong>額定運轉效率 (kW/RT)</strong>
+            <code>= 銘牌耗電 kW / 銘牌冷凍能力 RT</code>
+        </div>
+        <div class="formula-item">
+            <strong>量測耗電負載率 (%)</strong>
+            <code>= 實測耗電 kW / 銘牌耗電 kW</code>
+        </div>
+        <div class="formula-item">
+            <strong>量測負載率 (%)</strong>
+            <code>= 實測冷凍能力 RT / 銘牌冷凍能力 RT</code>
+        </div>
+        <div class="formula-item">
+            <strong>額定 COP</strong>
+            <code>= (銘牌冷凍能力 RT × 3.516) / 銘牌耗電 kW</code>
+        </div>
+        <div class="formula-item">
+            <strong>RT轉換成冰水流量算式 (LPM)</strong>
+            <code>= (RT × 3024) / (60 × 標準設計溫差 5°C)</code>
+        </div>
+        <div class="formula-item">
+            <strong>RT轉換成冷卻水流量算式 (LPM)</strong>
+            <code>= ((RT × 3024) + (銘牌耗電 kW × 860)) / (60 × 標準設計溫差 5°C)</code>
+        </div>
+    </div>
+</div>
+
 <script>
+// Modal 控制邏輯
+function openModal() {
+    document.getElementById('formulaModal').style.display = 'block';
+}
+
+function closeModal() {
+    document.getElementById('formulaModal').style.display = 'none';
+}
+
+// 點擊 Modal 背景遮罩時自動關閉
+window.onclick = function(event) {
+    var modal = document.getElementById('formulaModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// 核心計算邏輯
 async function calculate() {
     const payload = {
         sys_type: document.getElementById('sys_type').value,
@@ -195,7 +300,6 @@ async function calculate() {
         return;
     }
 
-    // 填寫基礎數據
     document.getElementById('res_dt').innerText = `${data.delta_t} °C`;
     document.getElementById('res_theo_flow').innerText = `${data.theoretical_flow} LPM`;
     
@@ -206,7 +310,6 @@ async function calculate() {
         flowElem.innerHTML = `<span class="invalid">❌ 異常 (${data.flow_error_percent > 0 ? '+' : ''}${data.flow_error_percent}%)</span>`;
     }
 
-    // 填寫效能指標數據
     document.getElementById('res_cooling_load').innerText = `${data.cooling_load_ratio} %`;
     document.getElementById('res_power_load').innerText = `${data.power_load_ratio} %`;
     document.getElementById('res_measured_eff').innerText = `${data.measured_efficiency} kW/RT`;

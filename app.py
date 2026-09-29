@@ -43,20 +43,21 @@ def calculate():
         theoretical_flow = (rated_usrt * 3024) / (60 * DESIGN_DELTA_T)
     else:
         # 冷卻水側：銘牌冷凍能力(kcal/hr) + 銘牌耗電作功(換算為 kcal/hr)
-        # 捨棄 1.25 經驗值，以銘牌實際 kW 達到最高精準度
         theoretical_flow = ((rated_usrt * 3024) + (rated_power_kw * 860)) / (60 * DESIGN_DELTA_T)
         
     # 4. 流量誤差判定 (±10%)
     flow_error = (measured_flow - theoretical_flow) / theoretical_flow
     is_flow_valid = abs(flow_error) <= 0.10
     
-    # 5. 效能與負載指標運算區塊
+    # 5. 耗電合理性判定 (量測值 <= 額定值 * 1.1)
+    is_power_valid = measured_kw <= (rated_power_kw * 1.10)
+    
+    # 6. 效能與負載指標運算區塊
     # A. 計算現場實測冷凍能力 (Measured USRT)
     if sys_type == 'chilled':
         measured_usrt = (measured_flow * delta_t * 60) / 3024.0
     else:
         # 實測冷卻水側冷凍能力 = 實測總排熱量 - 實測壓縮機作功
-        # 這裡直接使用電力分析儀的測量值 (measured_kw)
         measured_usrt = (measured_flow * delta_t * 60 / 3024.0) - (measured_kw / 3.516)
         
     # 防呆機制：避免除以零或出現負值
@@ -84,6 +85,7 @@ def calculate():
         "theoretical_flow": round(theoretical_flow, 0),
         "flow_error_percent": round(flow_error * 100, 1),
         "is_flow_valid": is_flow_valid,
+        "is_power_valid": is_power_valid,
         "measured_efficiency": round(measured_efficiency, 3),
         "rated_efficiency": round(rated_efficiency, 3),
         "power_load_ratio": round(power_load_ratio * 100, 1),

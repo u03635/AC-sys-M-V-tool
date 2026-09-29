@@ -13,6 +13,7 @@
             --accent-color: #4A90E2;
             --success-color: #00FF00;
             --error-color: #FF5252;
+            --highlight-color: #F5A623;
         }
         body {
             background-color: var(--bg-color);
@@ -35,69 +36,38 @@
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 15px;
         }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 0.95rem;
-        }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-size: 0.95rem; color: #BBBBBB; }
         input, select {
-            width: 100%;
-            padding: 12px;
-            box-sizing: border-box;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 16px;
+            width: 100%; padding: 12px; box-sizing: border-box;
+            background-color: var(--bg-color); color: var(--text-color);
+            border: 1px solid var(--border-color); border-radius: 6px; font-size: 16px;
         }
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--accent-color);
-        }
-        .capacity-input-group {
-            display: flex;
-            gap: 5px;
-        }
-        .capacity-input-group input {
-            flex: 2;
-        }
-        .capacity-input-group select {
-            flex: 1;
-            padding: 12px 5px;
-            font-size: 0.9rem;
-        }
+        input:focus, select:focus { outline: none; border-color: var(--accent-color); }
+        .capacity-input-group { display: flex; gap: 5px; }
+        .capacity-input-group input { flex: 2; }
+        .capacity-input-group select { flex: 1; padding: 12px 5px; font-size: 0.9rem; }
         button {
-            width: 100%;
-            padding: 15px;
-            background-color: var(--accent-color);
-            color: #FFFFFF;
-            border: none;
-            border-radius: 6px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
+            width: 100%; padding: 15px; background-color: var(--accent-color);
+            color: #FFFFFF; border: none; border-radius: 6px; font-size: 1.1rem;
+            font-weight: bold; cursor: pointer; margin-top: 10px;
         }
         #result-box {
-            margin-top: 25px;
-            padding: 15px;
-            border-radius: 6px;
-            background-color: var(--bg-color);
-            display: none;
+            margin-top: 25px; border-radius: 6px; display: none;
+        }
+        .result-section {
+            background-color: var(--bg-color); padding: 15px; border-radius: 6px; margin-bottom: 15px;
+        }
+        .section-title {
+            font-size: 0.9rem; color: var(--highlight-color); margin-bottom: 10px; border-bottom: 1px dashed var(--border-color); padding-bottom: 5px;
         }
         .valid { color: var(--success-color); font-weight: bold; }
         .invalid { color: var(--error-color); font-weight: bold; }
         .result-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--border-color);
+            display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem;
         }
-        .result-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .result-row:last-child { margin-bottom: 0; }
+        .value-text { font-weight: bold; }
     </style>
 </head>
 <body>
@@ -107,17 +77,16 @@
     <div class="form-group">
         <label>系統側別</label>
         <select id="sys_type">
-            <option value="chilled">冰水側 (Chilled Water)</option>
             <option value="cooling">冷卻水側 (Cooling Water)</option>
+            <option value="chilled">冰水側 (Chilled Water)</option>
         </select>
     </div>
     
-    <!-- 優化後的銘牌輸入區塊 -->
     <div style="display: flex; gap: 10px;">
         <div class="form-group" style="flex: 1.2;">
             <label>銘牌冷凍能力</label>
             <div class="capacity-input-group">
-                <input type="number" id="capacity_val" step="0.1" value="100">
+                <input type="number" id="capacity_val" step="0.1" value="23.25">
                 <select id="capacity_unit">
                     <option value="usrt">USRT</option>
                     <option value="kcal_hr">kcal/hr</option>
@@ -126,51 +95,75 @@
             </div>
         </div>
         <div class="form-group" style="flex: 0.8;">
-            <!-- 明確標示為耗電功率 -->
             <label>銘牌耗電 (Power kW)</label>
-            <input type="number" id="rated_power_kw" step="0.1" value="80">
+            <input type="number" id="rated_power_kw" step="0.1" value="34.5">
         </div>
     </div>
 
     <div style="display: flex; gap: 10px;">
         <div class="form-group" style="flex: 1;">
-            <label>進水溫 (°C)</label>
-            <input type="number" id="temp_in" step="0.1" value="12">
+            <label>現場進水溫 (°C)</label>
+            <input type="number" id="temp_in" step="0.1" value="32">
         </div>
         <div class="form-group" style="flex: 1;">
-            <label>出水溫 (°C)</label>
-            <input type="number" id="temp_out" step="0.1" value="7">
+            <label>現場出水溫 (°C)</label>
+            <input type="number" id="temp_out" step="0.1" value="37">
         </div>
     </div>
 
     <div class="form-group">
         <label>現場量測流量 (LPM)</label>
-        <input type="number" id="measured_flow" step="0.1" value="1000">
+        <input type="number" id="measured_flow" step="0.1" value="350">
     </div>
 
     <div class="form-group">
         <label>現場量測電力 (kW)</label>
-        <input type="number" id="measured_kw" step="0.1" value="75">
+        <input type="number" id="measured_kw" step="0.1" value="12.0">
     </div>
 
     <button onclick="calculate()">立即驗證</button>
 
     <div id="result-box">
-        <div class="result-row">
-            <span>現場溫差 (ΔT)：</span>
-            <span id="res_dt"></span>
+        <!-- 基礎流量驗證區 -->
+        <div class="result-section">
+            <div class="section-title">基礎數據驗證</div>
+            <div class="result-row">
+                <span>現場溫差 (ΔT)：</span>
+                <span class="value-text" id="res_dt"></span>
+            </div>
+            <div class="result-row">
+                <span>標準理論流量需求：</span>
+                <span class="value-text" id="res_theo_flow"></span>
+            </div>
+            <div class="result-row">
+                <span>流量合理性判定：</span>
+                <span id="res_flow_status"></span>
+            </div>
         </div>
-        <div class="result-row">
-            <span>理論流量需求：</span>
-            <span id="res_theo_flow"></span>
-        </div>
-        <div class="result-row">
-            <span>流量誤差判定：</span>
-            <span id="res_flow_status"></span>
-        </div>
-        <div class="result-row">
-            <span>負載率 (電力)：</span>
-            <span id="res_power_status"></span>
+
+        <!-- 效能與負載指標區 -->
+        <div class="result-section">
+            <div class="section-title">效能與負載指標</div>
+            <div class="result-row">
+                <span>量測負載率 (RT)：</span>
+                <span class="value-text" id="res_cooling_load"></span>
+            </div>
+            <div class="result-row">
+                <span>量測耗電負載率 (kW)：</span>
+                <span class="value-text" id="res_power_load"></span>
+            </div>
+            <div class="result-row" style="margin-top: 10px; border-top: 1px solid #333; padding-top: 10px;">
+                <span>量測運轉效率：</span>
+                <span class="value-text" id="res_measured_eff" style="color: #4A90E2;"></span>
+            </div>
+            <div class="result-row">
+                <span>額定運轉效率：</span>
+                <span class="value-text" id="res_rated_eff"></span>
+            </div>
+            <div class="result-row">
+                <span>額定 COP：</span>
+                <span class="value-text" id="res_rated_cop"></span>
+            </div>
         </div>
     </div>
 </div>
@@ -202,6 +195,7 @@ async function calculate() {
         return;
     }
 
+    // 填寫基礎數據
     document.getElementById('res_dt').innerText = `${data.delta_t} °C`;
     document.getElementById('res_theo_flow').innerText = `${data.theoretical_flow} LPM`;
     
@@ -212,12 +206,12 @@ async function calculate() {
         flowElem.innerHTML = `<span class="invalid">❌ 異常 (${data.flow_error_percent > 0 ? '+' : ''}${data.flow_error_percent}%)</span>`;
     }
 
-    const powerElem = document.getElementById('res_power_status');
-    if (data.is_power_valid) {
-        powerElem.innerHTML = `<span class="valid">✅ 合理 (${data.power_ratio_percent}%)</span>`;
-    } else {
-        powerElem.innerHTML = `<span class="invalid">❌ 超載 (${data.power_ratio_percent}%)</span>`;
-    }
+    // 填寫效能指標數據
+    document.getElementById('res_cooling_load').innerText = `${data.cooling_load_ratio} %`;
+    document.getElementById('res_power_load').innerText = `${data.power_load_ratio} %`;
+    document.getElementById('res_measured_eff').innerText = `${data.measured_efficiency} kW/RT`;
+    document.getElementById('res_rated_eff').innerText = `${data.rated_efficiency} kW/RT`;
+    document.getElementById('res_rated_cop').innerText = data.rated_cop;
 
     resBox.style.display = 'block';
 }

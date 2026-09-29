@@ -80,6 +80,9 @@ def calculate():
     # F. 額定 COP
     rated_cop = (safe_rated_usrt * 3.516) / safe_rated_power
     
+    # G. 量測 COP (防呆：若量測耗電為 0 則回傳 0)
+    measured_cop = (safe_measured_usrt * 3.516) / measured_kw if measured_kw > 0 else 0
+    
     return jsonify({
         "delta_t": round(delta_t, 2),
         "theoretical_flow": round(theoretical_flow, 0),
@@ -90,7 +93,8 @@ def calculate():
         "rated_efficiency": round(rated_efficiency, 3),
         "power_load_ratio": round(power_load_ratio * 100, 1),
         "cooling_load_ratio": round(cooling_load_ratio * 100, 1),
-        "rated_cop": round(rated_cop, 2)
+        "rated_cop": round(rated_cop, 2),
+        "measured_cop": round(measured_cop, 2)
     })
 
 if __name__ == '__main__':

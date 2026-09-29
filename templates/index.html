@@ -186,6 +186,11 @@
                 <span>流量合理性判定：</span>
                 <span id="res_flow_status"></span>
             </div>
+            <!-- 新增耗電合理性判定 -->
+            <div class="result-row">
+                <span>耗電合理性判定：</span>
+                <span id="res_power_status"></span>
+            </div>
         </div>
 
         <div class="result-section">
@@ -265,7 +270,6 @@ function closeModal() {
     document.getElementById('formulaModal').style.display = 'none';
 }
 
-// 點擊 Modal 背景遮罩時自動關閉
 window.onclick = function(event) {
     var modal = document.getElementById('formulaModal');
     if (event.target == modal) {
@@ -300,9 +304,11 @@ async function calculate() {
         return;
     }
 
+    // 填寫基礎數據
     document.getElementById('res_dt').innerText = `${data.delta_t} °C`;
     document.getElementById('res_theo_flow').innerText = `${data.theoretical_flow} LPM`;
     
+    // 流量判定渲染
     const flowElem = document.getElementById('res_flow_status');
     if (data.is_flow_valid) {
         flowElem.innerHTML = `<span class="valid">✅ 合理 (${data.flow_error_percent > 0 ? '+' : ''}${data.flow_error_percent}%)</span>`;
@@ -310,6 +316,15 @@ async function calculate() {
         flowElem.innerHTML = `<span class="invalid">❌ 異常 (${data.flow_error_percent > 0 ? '+' : ''}${data.flow_error_percent}%)</span>`;
     }
 
+    // 新增：耗電判定渲染
+    const powerElem = document.getElementById('res_power_status');
+    if (data.is_power_valid) {
+        powerElem.innerHTML = `<span class="valid">✅ 合理 (${data.power_load_ratio}%)</span>`;
+    } else {
+        powerElem.innerHTML = `<span class="invalid">❌ 異常超載 (${data.power_load_ratio}%)</span>`;
+    }
+
+    // 填寫效能指標數據
     document.getElementById('res_cooling_load').innerText = `${data.cooling_load_ratio} %`;
     document.getElementById('res_power_load').innerText = `${data.power_load_ratio} %`;
     document.getElementById('res_measured_eff').innerText = `${data.measured_efficiency} kW/RT`;

@@ -41,7 +41,6 @@
             align-items: center;
             gap: 10px;
         }
-        /* 資訊圖示樣式 */
         .info-icon {
             cursor: pointer;
             color: var(--accent-color);
@@ -88,7 +87,6 @@
         .result-row:last-child { margin-bottom: 0; }
         .value-text { font-weight: bold; }
 
-        /* 彈出視窗 (Modal) 樣式 */
         .modal {
             display: none; position: fixed; z-index: 100; left: 0; top: 0;
             width: 100%; height: 100%; overflow: auto;
@@ -186,7 +184,6 @@
                 <span>流量合理性判定：</span>
                 <span id="res_flow_status"></span>
             </div>
-            <!-- 新增耗電合理性判定 -->
             <div class="result-row">
                 <span>耗電合理性判定：</span>
                 <span id="res_power_status"></span>
@@ -214,6 +211,11 @@
             <div class="result-row">
                 <span>額定 COP：</span>
                 <span class="value-text" id="res_rated_cop"></span>
+            </div>
+            <!-- 新增量測 COP -->
+            <div class="result-row">
+                <span>量測 COP：</span>
+                <span class="value-text" id="res_measured_cop" style="color: #4A90E2;"></span>
             </div>
         </div>
     </div>
@@ -249,6 +251,11 @@
             <strong>額定 COP</strong>
             <code>= (銘牌冷凍能力 RT × 3.516) / 銘牌耗電 kW</code>
         </div>
+        <!-- 新增量測 COP 說明 -->
+        <div class="formula-item">
+            <strong>量測 COP</strong>
+            <code>= (實測冷凍能力 RT × 3.516) / 實測耗電 kW</code>
+        </div>
         <div class="formula-item">
             <strong>RT轉換成冰水流量算式 (LPM)</strong>
             <code>= (RT × 3024) / (60 × 標準設計溫差 5°C)</code>
@@ -261,7 +268,6 @@
 </div>
 
 <script>
-// Modal 控制邏輯
 function openModal() {
     document.getElementById('formulaModal').style.display = 'block';
 }
@@ -277,7 +283,6 @@ window.onclick = function(event) {
     }
 }
 
-// 核心計算邏輯
 async function calculate() {
     const payload = {
         sys_type: document.getElementById('sys_type').value,
@@ -304,11 +309,9 @@ async function calculate() {
         return;
     }
 
-    // 填寫基礎數據
     document.getElementById('res_dt').innerText = `${data.delta_t} °C`;
     document.getElementById('res_theo_flow').innerText = `${data.theoretical_flow} LPM`;
     
-    // 流量判定渲染
     const flowElem = document.getElementById('res_flow_status');
     if (data.is_flow_valid) {
         flowElem.innerHTML = `<span class="valid">✅ 合理 (${data.flow_error_percent > 0 ? '+' : ''}${data.flow_error_percent}%)</span>`;
@@ -316,7 +319,6 @@ async function calculate() {
         flowElem.innerHTML = `<span class="invalid">❌ 異常 (${data.flow_error_percent > 0 ? '+' : ''}${data.flow_error_percent}%)</span>`;
     }
 
-    // 新增：耗電判定渲染
     const powerElem = document.getElementById('res_power_status');
     if (data.is_power_valid) {
         powerElem.innerHTML = `<span class="valid">✅ 合理 (${data.power_load_ratio}%)</span>`;
@@ -324,12 +326,13 @@ async function calculate() {
         powerElem.innerHTML = `<span class="invalid">❌ 異常超載 (${data.power_load_ratio}%)</span>`;
     }
 
-    // 填寫效能指標數據
     document.getElementById('res_cooling_load').innerText = `${data.cooling_load_ratio} %`;
     document.getElementById('res_power_load').innerText = `${data.power_load_ratio} %`;
     document.getElementById('res_measured_eff').innerText = `${data.measured_efficiency} kW/RT`;
     document.getElementById('res_rated_eff').innerText = `${data.rated_efficiency} kW/RT`;
     document.getElementById('res_rated_cop').innerText = data.rated_cop;
+    // 寫入量測 COP 數值
+    document.getElementById('res_measured_cop').innerText = data.measured_cop;
 
     resBox.style.display = 'block';
 }
